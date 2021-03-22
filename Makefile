@@ -1,4 +1,4 @@
-DEBUG_BUILD = yes
+#DEBUG_BUILD = yes
 BIN = c_ipv6_helper
 RM = rm
 CC = gcc

@@ -1,2 +1,4 @@
 c_ipv6_helper
 cscope.out
+*.o
+*~
