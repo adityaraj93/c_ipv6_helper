@@ -66,6 +66,18 @@ static void print_classes(struct classification *head, FILE *fp) {
 					(((const uint32_t*)(a))[3] & htonl(0xff000000)) == htonl(0xff000000))
 
 
+static char* deconstruct_nat64rsvd(struct in6_addr *addr) {
+	struct in_addr v4addr = { .s_addr = ((const uint32_t*)addr)[3] };
+	char tmpbuf[32], *buf = calloc(1, 1024);
+
+	if (NULL == inet_ntop(AF_INET, (void*)&v4addr, tmpbuf, sizeof(tmpbuf))) {
+		snprintf(buf, 1024, "failed to convert 0x%08x to string, err %s\n", (int)v4addr.s_addr, strerror(errno));
+		return buf;
+	}
+	snprintf(buf, 1024, "%s\n", tmpbuf);
+	return buf;
+}
+
 static char* deconstruct_multicast(struct in6_addr *addr) {
 	uint8_t flgs, scop, len = 0;
 	const char *scop_str[0x10] = {
@@ -127,8 +139,10 @@ static void classify(struct classification *head, struct in6_addr *addr) {
 		add_class(head, "DOCUMENTATION(2001:db8::/32)");
 	if (IN6_IS_ADDR_DISCARD(addr))
 		add_class(head, "DISCARD(100::/64)");
-	if (IN6_IS_ADDR_NAT64RSVD(addr))
+	if (IN6_IS_ADDR_NAT64RSVD(addr)) {
 		add_class(head, "NAT64RESERVED(64:ff9b::/96)");
+		add_class(head, deconstruct_nat64rsvd(addr));
+	}
 	if (IN6_IS_ADDR_MULTICAST(addr)) {
 		add_class(head, "MULTICAST(ff00::/8)");
 		if (IN6_IS_ADDR_MC_GLOBAL(addr))
